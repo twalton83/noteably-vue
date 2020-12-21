@@ -5,6 +5,10 @@ const bcrypt = require('bcryptjs');
 const { check, validationResult } = require('express-validator');
 const passport = require('passport');
 
+router.get('/', function(req,res){
+  console.log('route hit here!')
+})
+
 const signupValidation = [
   check('username', 'Please enter a username')
   .exists()
@@ -13,20 +17,19 @@ const signupValidation = [
   .isLength({min : 8})
   .exists()
   .bail(),
-  check('passwordConf', 'Passwords don\'t match.')
+  check('confirmPass', 'Passwords don\'t match.')
   .exists()
   .custom((value, {req})=> value === req.body.password)
 ]
 
 router.post('/signup', signupValidation, function(req, res, next){
   const errors = validationResult(req)
-  console.log(errors)
   if(!errors.isEmpty()){
-    res.render('sign-up', {errors: errors.array()})
+    res.redirect('/')
   } else {
       bcrypt.hash(req.body.password, 10, (err, hashedPass) => {
           if (err){
-          res.redirect("/");
+          res.json(err)
           } else {
           const user = new User({
               username: req.body.username,
@@ -36,7 +39,7 @@ router.post('/signup', signupValidation, function(req, res, next){
               return next(err)
               };
               passport.authenticate('local')(req,res, ()=>{
-                return res.redirect("/")
+                return res.json({authenticated: true})
               })
           });
           }

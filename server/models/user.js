@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
+const NoteSchema = require('./note').Schema
 
 const userSchema = new Schema({
   username : { type: String, required: true },
