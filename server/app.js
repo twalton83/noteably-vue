@@ -9,6 +9,9 @@ const LocalStrategy = require('passport-local').Strategy
 const mongoose = require('mongoose')
 require("dotenv").config();
 const cors = require('cors')
+const User = require('./models/user')
+const Note = require('./models/note')
+const bcrypt = require('bcryptjs')
 
 const indexRouter = require('./routes/index');
 
@@ -17,20 +20,16 @@ mongoose.connect(mongoDb, { useUnifiedTopology: true, useNewUrlParser: true });
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "mongo connection error"));
 
+
+
 const app = express();
-
-
 if (process.env.NODE_ENV !== 'production') {
-   app.use(cors())
+  app.use(cors())
 }
-
 app.use(logger('dev'));
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
 
 passport.use(
   new LocalStrategy((username, password, done) => {
@@ -44,8 +43,10 @@ passport.use(
         return done(null, false, { msg: "Incorrect username" });
       }
       bcrypt.compare(password, user.password, (err, res) => {
+        console.log('comparing')
         if (res) {
           // passwords match! log user in
+          console.log('matched!')
           return done(null, user);
         } else {
           // passwords do not match!
@@ -66,19 +67,24 @@ passport.deserializeUser(function (id, done) {
   });
 });
 
+
 app.use(session({ secret: process.env.SECRET, resave: false, saveUninitialized: true}));
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
 app.use(function (req, res, next) {
   res.locals.currentUser = req.user;
   next();
 });
 
+app.use('/', indexRouter);
+
 
 const authenticated = (req,res,next) =>{
   req.isAuthenticated() ? next() : res.redirect('/')
 }
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -93,6 +99,7 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.send('error');
 });
+
 
 
 app.listen(5501, () => console.log('Noteably Server online.'));

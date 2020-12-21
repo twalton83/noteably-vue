@@ -6,8 +6,9 @@ const { check, validationResult } = require('express-validator');
 const passport = require('passport');
 
 router.get('/', function(req,res){
-  console.log('route hit here!')
+  
 })
+
 
 const signupValidation = [
   check('username', 'Please enter a username')
@@ -39,12 +40,28 @@ router.post('/signup', signupValidation, function(req, res, next){
               return next(err)
               };
               passport.authenticate('local')(req,res, ()=>{
-                return res.json({authenticated: true})
+                return res.json({user})
               })
           });
           }
       });
   }
+})
+
+router.post("/login", function(req,res, next){
+  passport.authenticate("local", function(err, user, info){
+    if(err) {return next(err)}
+    if(!user) { return res.redirect('/login')}
+    req.logIn(user, function(err){
+      if(err) {return next(err)}
+      return res.json({user : user})
+    })
+  })(req,res, next)
+})
+
+router.get('/logout', function(req, res){
+  req.logout()
+  res.json({loggedOut: true})
 })
 
 module.exports = router;
